@@ -23,8 +23,4 @@ def plot_spectrogram(y, sr, window_size, hop_length, n_fft):
 audio_file = "../assets/aa.ogg"
 y, sr = librosa.load(audio_file)
 
-window_sizes = [1024, 2048, 4096]
-hop_lengths = [512, 1024, 2048]
-n_ffts = [1024, 2048, 4096]
-
 plot_spectrogram(y, sr, 1024, 512, 4096)
