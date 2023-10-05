@@ -6,6 +6,7 @@ import pickle as pkl
 import warnings
 
 STEP_SIZE = 0.02
+SKIP_SIZE = 6
 
 
 class Parser:
@@ -89,32 +90,45 @@ class Predictor:
             print(f"\033[91m[ERROR]  :\033[0m {e}")
             exit(1)
 
+    def __post_processing(self, data):
+        for i in range(len(data) - SKIP_SIZE):
+            for j in range(1, SKIP_SIZE):
+                if data[i][2] == 1 and data[i + j][2] == 1:
+                    for k in range(1, j):
+                        data[i + k][2] = 1
+        final_data = []
+        start = data[0][0]
+        pred_value = data[0][2]
+        for d in data[1:]:
+            current_pred = d[2]
+            if current_pred == pred_value:
+                continue
+            final_data.append([start, d[0], True if pred_value == 1 else False])
+            start = d[0]
+            pred_value = current_pred
+        final_data.append([start, data[-1][1], True if pred_value == 1 else False])
+        return final_data
+
     def __save_predictions(self, final_data):
         df = pd.DataFrame(final_data)
-        df.columns = ["Start Time", "End TIme", "Speech Detected"]
+        df.columns = ["Start Time", "End TIme", "Silence"]
         df.to_csv(self.__output_file, index=False)
         print(f"\033[92m[SUCCESS]:\033[0m Predictions made")
-        return
+        return """  """
 
     def predict(self, input_file, output_file):
         self.__input_file = input_file
         self.__output_file = output_file
         duration = self.__get_duration()
+        pred_data = []
         i = 0
-        prev_pred = 0
-        final_data = []
-        data = [0.0]
+        current_pred = 0
         while i + STEP_SIZE <= duration:
             current_pred = self.__make_prediction(i)
-            if i != 0:
-                if current_pred != prev_pred:
-                    data.append(round(i, 2))
-                    data.append("False" if prev_pred == 0 else "True")
-                    final_data.append(data)
-                    data = [round(i, 2)]
-            prev_pred = current_pred
+            pred_data.append([round(i, 3), round(i + STEP_SIZE, 3), current_pred])
             i += STEP_SIZE
-        final_data.append([final_data[-1][1], round(duration, 3), "False"])
+        pred_data.append([pred_data[-1][1], round(duration, 3), current_pred])
+        final_data = self.__post_processing(pred_data)
         self.__save_predictions(final_data)
         return
 
