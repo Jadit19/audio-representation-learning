@@ -111,7 +111,7 @@ class Predictor:
 
     def __save_predictions(self, final_data):
         df = pd.DataFrame(final_data)
-        df.columns = ["Start Time", "End TIme", "Silence"]
+        df.columns = ["Start Time", "End Time", "Silence"]
         df.to_csv(self.__output_file, index=False)
         print(f"\033[92m[SUCCESS]:\033[0m Predictions made")
         return """  """
